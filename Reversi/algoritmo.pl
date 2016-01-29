@@ -56,6 +56,7 @@ alphabeta(Board, Bounds, GoodMove, GoodVal, Depth, X1, X2, ToMove) :-
   OneDeeper is Depth - 1,
   boundedbest(Board, Moves, Bounds, GoodMove, GoodVal, OneDeeper, X1, X2, NextToMove), !.
 
+boundedbest(Board, [], Bounds, GoodMove, GoodVal, Depth, X1, X2, ToMove) :- !. % No existe movimiento posible
 boundedbest(Board, [Move|TailMoves], Bounds, GoodMove, GoodVal, Depth, X1, X2, ToMove) :-
   player(ToMove, X),
   reversi:put(Board, Move, X, X1, X2, NewBoard, NX1, NX2),    % Nuevo tablero con el movimiento aplicado

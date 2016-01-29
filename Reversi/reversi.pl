@@ -93,12 +93,21 @@ escribeFichasJugadores:-
 reversi:-
 	% Se inicializa el tablero
 	% assertz permite añadir una nueva cláusula en el programa, esto permite la modificación dinámica del programa
-	assertz(tablero( [0,0,0,0,0,0,0,0]    
+	% assert(tablero( [1,1,1,1,1,1,1,1]   	
+	%				,[1,1,1,1,1,1,1,1]		
+	%				,[1,1,0,2,1,1,1,1]		
+	%				,[1,1,1,1,1,1,1,1]		
+	%				,[1,1,1,1,1,1,1,1]		
+	%				,[1,1,1,1,1,1,1,1]		
+	%				,[1,1,1,1,1,1,1,1]		
+	%				,[1,1,1,1,1,1,1,1])),	
+		
+	assert(tablero(	 [0,0,0,0,0,0,0,0]
 					,[0,0,0,0,0,0,0,0]   
-					,[0,2,1,0,0,0,0,0]
-					,[0,1,2,1,2,0,0,0]
-					,[0,0,1,2,1,0,0,0]
-					,[0,0,1,0,0,0,0,0]
+					,[0,0,0,0,0,0,0,0]
+					,[0,0,0,1,2,0,0,0]
+					,[0,0,0,2,1,0,0,0]
+					,[0,0,0,0,0,0,0,0]
 					,[0,0,0,0,0,0,0,0]
 					,[0,0,0,0,0,0,0,0])),
 		
@@ -108,13 +117,21 @@ reversi:-
 		% fichas(60): 	Son un total de 60 fichas, tantas como casillas vacías hay en el tablero
 		% listaJug1:		En ella se llevará las fichas del jugador 1
 		% listaJug2:		En ella se llevará las fichas del jugador 2
-		% listaCambiar:		En ella se llevará las fichas que deben cambiar de propietario
 		assertz(fichas(60)), 
 		% assertz(fichas(1)), 
-		% assertz(listaJug1([(4,4),(5,5)|[]])), 
-		% assertz(listaJug2([(4,5),(5,4)|[]])), 
-		assertz(listaJug1([(4,4),(5,5),(6,3),(4,2),(3,3),(5,3)|[]])), 
-		assertz(listaJug2([(4,5),(5,4),(4,3),(3,2)|[]])), 
+		assertz(listaJug1([(4,4),(5,5)|[]])), 
+		assertz(listaJug2([(4,5),(5,4)|[]])), 
+		% assertz(listaJug1([	(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),
+		% 					(2,2),(2,3),(2,4),(2,5),(2,6),(2,7),(2,8),
+		% 					(3,2),(3,5),(3,6),(3,7),(3,8),
+		% 					(4,2),(4,3),(4,4),(4,5),(4,6),(4,7),(4,8),
+		%					(5,2),(5,3),(5,4),(5,5),(5,6),(5,7),(5,8),
+		%					(6,2),(6,3),(6,4),(6,5),(6,6),(6,7),(6,8),
+		%					(7,2),(7,3),(7,4),(7,5),(7,6),(7,7),(7,8),
+		%					(8,2),(8,3),(8,4),(8,5),(8,6),(8,7),(8,8)|[]])), 
+		% assertz(listaJug2([(3,4)|[]])), 
+		
+		% listaCambiar:		En ella se llevará las fichas que deben cambiar de propietario
 		assertz(listaCambiar([])), 
 		
 		% listaAuxiliar:	En ella se llevarán elementos que no se quieran perder en algunas operaciones
@@ -126,9 +143,6 @@ reversi:-
 		% MaxFila x MaxColumna son las dimensiones del tablero
 		assertz(maxFila(8)),
 		assertz(maxColumna(8)),
-				
-		% Fase():		Indicará la fase del juego en la que nos encontramos
-		assertz(fase(0)),
 		
 		% bloqueado:		Indicará si el juego está bloqueado para algún jugador
 		assertz(bloqueado(0)),
@@ -664,23 +678,54 @@ colocaFichaJugador(NumFichas, Fila, Columna):-
 		movimientoJugador(NumFichas)
 	).	
 		
+% ------------------------------------------------------------------------------------------------------------------------			
+jugadorBloqueado(Jug):-
+	(	Jug = 1 ->
+			AuxJug = min
+			;
+			AuxJug = max
+	),
+	tablero(A,B,C,D,E,F,G,H),
+	listaCambiar(X),
+	retract(listaCambiar(_X)),
+	assert(listaCambiar([])),
+	moves([A,B,C,D,E,F,G,H],AuxJug,M),
+	( M = [] ->
+		true
+		;
+		!,false % El punto de corte evita los ciclos bloqueando la reevaluación de un estado previmente analizado
+	).
+		
 % ------------------------------------------------------------------------------------------------------------------------	
 	
 % mueveJugador(+) Determina si el jugador está moviendo según la primera o la segunda fase del juego.
 
 movimientoJugador(NumFichas):-
-	
-	write('Introduce la posicion:'),nl,
-	write('Fila'),
-	read(Fila),
-	write('Columna'),
-	read(Columna),nl,
-	write('___________________________________________________________'),nl,nl,
-	% (
-	%	Fila <= 0, assertz(juegoAcabado(true);
-	%  	Columna <= 0, assertz(juegoAcabado(true)
-	%  ),
-	colocaFichaJugador(NumFichas,Fila,Columna).
+	( jugadorBloqueado(1) ->
+		bloqueado(X),
+		(	X = 2 -> % El oponente también está bloqueado
+			haTerminado
+			;
+			retract(bloqueado(_X)),
+			assert(bloqueado(1))
+		)		
+		;
+		write('Introduce la posicion:'),nl,
+		write('Fila'),
+		read(Fila),
+		(Fila < 1 -> 
+			haTerminado
+			;
+			write('Columna'),
+			read(Columna),
+			(Columna < 1 -> 
+				haTerminado
+				;
+				nl,	write('___________________________________________________________'),nl,nl,
+				colocaFichaJugador(NumFichas,Fila,Columna)
+			)
+		)
+	).
 
 % ------------------------------------------------------------------------------------------------------------------------	
 	
@@ -688,28 +733,41 @@ movimientoJugador(NumFichas):-
 mueveMaquina(Prof):-
 		
 	tablero(A,B,C,D,E,F,G,H),
-	% Tablero, Jugador(máquina), Mejor Movimiento,
 	listaJug1(X1), listaJug2(X2),
-	minimax([A,B,C,D,E,F,G,H],(Fila,Columna,K),_MejorValor,Prof,X1,X2),
-	colocaFicha([A,B,C,D,E,F,G,H],Fila,Columna,2,[Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],FichasACambiar),
-	
-	nl,
-	write('Movimiento del oponente: '),nl,
-	write('Fila|: '),write(Fila),nl,
-	write('Columna|: '), write(Columna),nl,nl,
-	write('___________________________________________________________'),nl,nl,
-	
-	retract(tablero(_A,_B,_C,_D,_E,_F,_G,_H)),
-	assertz(tablero(Ar,Br,Cr,Dr,Er,Fr,Gr,Hr)),
-	   
-	listaJug2(X),									% Se "invoca" la lista del jugador para tratarla			
-	insertaElemento((Fila,Columna),X,NewFichas),		% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
-	retract(listaJug2(_X)),							% Se elimina la lista de fichas actual del jugador
-	assertz(listaJug2(NewFichas)),	   				% Se inserta la nueva lista de fichas del jugador
+	minimax([A,B,C,D,E,F,G,H],(Fila,Columna,K),_MejorValor,Prof,X1,X2), % Encuentra el mejor movimiento
+	(colocaFicha([A,B,C,D,E,F,G,H],Fila,Columna,2,[Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],FichasACambiar) ->
+		write('Movimiento del oponente: '),nl,
+		write('Fila|: '),write(Fila),nl,
+		write('Columna|: '), write(Columna),nl,nl,
+		write('___________________________________________________________'),nl,nl,
+		
+		fichas(NumFichas),
+		FichasRestantes is NumFichas - 1,
+		retract(fichas(NumFichas)),
+		assert(fichas(FichasRestantes)),
+		
+		retract(tablero(_A,_B,_C,_D,_E,_F,_G,_H)),
+		assertz(tablero(Ar,Br,Cr,Dr,Er,Fr,Gr,Hr)),
+		   
+		listaJug2(X),									% Se "invoca" la lista del jugador para tratarla			
+		insertaElemento((Fila,Columna),X,NewFichas),		% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
+		retract(listaJug2(_X)),							% Se elimina la lista de fichas actual del jugador
+		assertz(listaJug2(NewFichas)),	   				% Se inserta la nueva lista de fichas del jugador
 
-	cambiarFichasDePropietario(FichasACambiar,2),	% Se cambia las fichas flanqueadas de propietario 
-	
-	dibujaTablero.
+		cambiarFichasDePropietario(FichasACambiar,2),	% Se cambia las fichas flanqueadas de propietario 
+		dibujaTablero,
+		% fichas(FichasRestantes),
+		escribeFichasRestantes(FichasRestantes)
+		;
+		write('Movimiento del oponente: NO EXISTE ALGUNO POSIBLE'),nl,nl,
+		bloqueado(X),
+		(	X = 1 ->
+		 		haTerminado
+		 	;
+				retract(bloqueado(_X)),
+		 		assert(bloqueado(2))
+		)
+	).
 
 % ------------------------------------------------------------------------------------------------------------------------
 	
@@ -723,22 +781,24 @@ haTerminado:-
 	listaJug1(L1),listaJug2(L2),
 	longitud(L1,N1),longitud(L2,N2),
 	( N1 < N2 -> 
-		write('Has perdido :('),nl 
+		write('Has perdido (-___-)'),nl,nl
 		;
 		( N1 > N2 -> 
-			write('Has ganado :)'),nl
+			write('Has ganado (^___^) '),nl,nl
+			;
+			nl,write('Empate (>___<) '),nl,nl
 		) 
 	),
 	retractall(phase(_)),
 	retractall(listaJug1(_)),
 	retractall(listaJug2(_)),
-	write('¿Otra partida?(Y/N)'),nl,
+	write('Otra partida?(y/n)'),nl,nl,
 	read(Resp),
 	( 
 		Resp = y -> 
 			reversi 
 			;
-			write('Bye bye!'),nl,true
+			write('Bye bye!'),nl,false
 	).	
 	
 % ------------------------------------------------------------------------------------------------------------------------
@@ -747,8 +807,6 @@ haTerminado:-
 		
 bucleJuego(Dificultad):-
 	fichas(NumFichas),
-	escribeFichasRestantes(NumFichas),
-	% fichas(NumFichas),
 	movimientoJugador(NumFichas),
 	dibujaTablero,
 	fichas(NumFichas2),
@@ -756,18 +814,11 @@ bucleJuego(Dificultad):-
 	% escribeFichasJugadores,
 	sleep(0.4),
 	( not(juegoAcabado(true)) ->
-		
 		mueveMaquina(Dificultad),
-		FichasRestantes is NumFichas2 - 1,
-		
+		fichas(FichasRestantes),
 		(FichasRestantes > 0 ->
-			retract(fichas(_NumFichas2)),
-			assert(fichas(FichasRestantes)),
 			bucleJuego(Dificultad)			
 			;
-			retract(fichas(_NumFichas2)),
-			assert(fichas(FichasRestantes)),
-			assert(juegoAcabado(true)),
 			haTerminado
 		)
 		;
