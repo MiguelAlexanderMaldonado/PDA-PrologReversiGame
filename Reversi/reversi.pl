@@ -148,9 +148,6 @@ reversi:-
 		% bloqueado:		Indicará si el juego está bloqueado para algún jugador
 		assertz(bloqueado(0)),
 		
-		% juegoAcabado:		Indicará si se ha terminado el juego
-		assertz(juegoAcabado(false)),
-		
 		dificultad(Dificultad),
 		dibujaTablero,
 		bucleJuego(Dificultad).
@@ -325,14 +322,13 @@ dameComunes([X|Xs],Ys,Zs):-
 	dameComunes(Xs,Ys,Zs).
 	
 	
-% ------------------------------------------------------------------------------------------------------------------------			
+% --------------------------------------FIN OPERACIONES SOBRE LISTAS--------------------------------------------------------------------
+% ------------------------------------------------------------------------------------------------------------------------
 
-% existeFichaOponenteCerca(+,+) Comprueba si en las 8 posiciones adyacentes de una casilla existe una ficha del oponente (Los límites son casos particulares)
+% existeFichaOponenteAdyacente(+,+) Comprueba si en las 8 posiciones adyacentes de una casilla existe una ficha del oponente (Los límites son casos particulares)
 
-existeFichaOponenteCerca(W,Jug):-
-		
-		% write('Entra en existeFichaOponenteCerca'),nl,
-		
+existeFichaOponenteAdyacente(W,Jug):-
+				
 		damePosicionesAdyacentes(W,PosicionesAdyacentes),
 		
 		 (	Jug = 1	->
@@ -517,7 +513,7 @@ posicionValida(X,Jug):-
 		false
 		;
 		% Verifica que haya al menos una ficha del oponente cerca
-		(existeFichaOponenteCerca(X,Jug)	->
+		(existeFichaOponenteAdyacente(X,Jug)	->
 			% Comprueba que exista al menos un flanqueo válido
 			(existeFlanqueo(X,Jug) ->
 				true
@@ -780,7 +776,6 @@ mueveMaquina(Prof):-
 	
 % haTerminado Libera toda la memoria de la base de conocimeinto
 haTerminado:-
-	retractall(juegoAcabado(_)),
 	retractall(tablero(_A,_B,_C,_D,_E,_F,_G,_H)),
 	retractall(fichas(_)),
 	retractall(maxFila(_)),
@@ -820,21 +815,18 @@ bucleJuego(Dificultad):-
 	dibujaTablero,
 	fichas(NumFichas2),
 	escribeFichasRestantes(NumFichas2),
-	% escribeFichasJugadores,
 	sleep(0.4),
-	( not(juegoAcabado(true)) ->
-		mueveMaquina(Dificultad),
-		fichas(FichasRestantes),
-		(FichasRestantes > 0 ->
-			bucleJuego(Dificultad)			
-			;
-			haTerminado
-		)
+	mueveMaquina(Dificultad),
+	fichas(FichasRestantes),
+	(FichasRestantes > 0 ->
+		bucleJuego(Dificultad)			
 		;
 		haTerminado
 	).
 	
 % ------------------------------------------------------------------------------------------------------------------------
+	
+% ---------------------------------------OPERACIONES ALGORITMO---------------------------------------------------------------------------------
 
 % damePosicionesAdyacentesLibres(+,-):- Devuelve una lista con las posiciones libres adyacentes a una posición dada 
 
@@ -849,8 +841,6 @@ damePosicionesAdyacentesLibres((Fila,Columna), PosicionesAdyacentesLibres):-
 	% Nos quedamos sólo con las posiciones libres
 	eliminaElementos(X,PosicionesAdyacentes,PosicionesSinFichasJug1),
 	eliminaElementos(Y,PosicionesSinFichasJug1,PosicionesAdyacentesLibres).
-
-% ------------------------------------------------------------------------------------------------------------------------
 
 %	existenFlanqueos(+,+) Busca todos los posibles flaqueos existentes para el jugador Jug tomando como punto de partida cada elemento de la lista
 
@@ -875,8 +865,6 @@ buscaFlanqueos([(Fila,Columna)|Xs],Jug):-
 		;
 			buscaFlanqueos(Xs,Jug)
 	).
-	
-% ------------------------------------------------------------------------------------------------------------------------
 
 % compruebaMovimientos(+,+) Comprueba todos los movimientos existentes para el jugador Jug, lo cual se determina con la ayuda de las fichas
 % 							del oponente ya que debe flanquear estas
@@ -900,8 +888,6 @@ compruebaMovimientos([X|Xs],Jug):-
 	% write('cM:	Posiciones a cambiar de propietario: '),muestraFichas(Y),nl,nl
 	
 	compruebaMovimientos(Xs,Jug).
-	
-% ------------------------------------------------------------------------------------------------------------------------
 
 % moves(+,+,-) Devuelve en una lista todos los posibles movimientos del jugador Jug
 
@@ -941,7 +927,7 @@ put(Tablero,X,Jugador,X1,X2,NuevoTablero, NX1, NX2):-
 		insertaElemento(X,X2,NX2)   			% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
 	).	
 
-% ------------------------------------------------------------------------------------------------------------------------
+% ------------------------------------------OPERACIONES HURISTICA-----------------------------------------------------------------------
 
 maxFilasTablero(Tablero,MF):-
 	longitud(Tablero,MF).

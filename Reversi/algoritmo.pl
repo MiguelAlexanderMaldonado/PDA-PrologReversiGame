@@ -1,4 +1,4 @@
-% Autor: 			Guilherme Balena Versiani https://github.com/MiguelAlexanderMaldonado/tictactoe-prolog
+% Autor: 			Guilherme Balena Versiani https://code.google.com/archive/p/tictactoe-prolog/
 % Modificado por:	Miguel Alxander Maldonado Lenis
 
 :- module(algoritmo,

@@ -1,4 +1,4 @@
-% Autor: 			Guilherme Balena Versiani https://github.com/MiguelAlexanderMaldonado/tictactoe-prolog
+% Autor: 			Guilherme Balena Versiani https://code.google.com/archive/p/tictactoe-prolog/
 % Modificado por:	Miguel Alxander Maldonado Lenis
 
 :- module(heuristica,
@@ -36,6 +36,7 @@ h_func(Tablero,V,Jugador,ListaJug1,ListaJug2):-
 		;
 		AuxJug is 1
 	),
+	% Cuatos más grupos de fichas hayan del oponente indica una mayr posibilidad de realizar más flanqueos
 	fichasAgrupadasVertical(Tablero,AuxJug,ListaJug1,ListaJug2,R1),
 	fichasAgrupadasHorizontal(Tablero,AuxJug,ListaJug1,ListaJug2,R2),
 	NewV is (R0+R1+R2),
