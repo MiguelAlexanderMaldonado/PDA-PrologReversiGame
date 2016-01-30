@@ -63,7 +63,7 @@ boundedbest(Board, [Move|TailMoves], Bounds, GoodMove, GoodVal, Depth, X1, X2, T
   alphabeta(NewBoard, Bounds, _, Val, Depth, NX1, NX2, ToMove),
   goodenough(Board, TailMoves, Bounds, Move, Val, GoodMove, GoodVal, Depth, X1, X2, ToMove), !.
 
-goodenough(_, [], _, Move, Val, Move, Val, _, _, _, _) :- !.
+goodenough(_, [], _, Move, Val, GoodMove, Val, _, _, _, _) :- !.
 
 goodenough(_, _, Alpha/Beta, Move, Val, Move, Val, _, _, _, ToMove) :-
   ((ToMove = min, Val > Beta, !)

@@ -31,8 +31,13 @@
 h_func(Tablero,V,Jugador,ListaJug1,ListaJug2):-
 	
 	win(Jugador,ListaJug1,ListaJug2,R0),
-	fichasAgrupadasVertical(Tablero,Jugador,ListaJug1,ListaJug2,R1),
-	fichasAgrupadasHorizontal(Tablero,Jugador,ListaJug1,ListaJug2,R2),
+	(	Jugador = 1 ->
+		AuxJug is 2
+		;
+		AuxJug is 1
+	),
+	fichasAgrupadasVertical(Tablero,AuxJug,ListaJug1,ListaJug2,R1),
+	fichasAgrupadasHorizontal(Tablero,AuxJug,ListaJug1,ListaJug2,R2),
 	NewV is (R0+R1+R2),
 	V is NewV.
 	

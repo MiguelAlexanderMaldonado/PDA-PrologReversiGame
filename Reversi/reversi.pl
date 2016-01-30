@@ -35,7 +35,7 @@
 limpia:-
         format('~c~s~c~s',[0x1b,"[H",0x1b,"[2J"]).
 
-:- dynamic 	tablero/8,fase/1,bloqueado/1,listaJug1/1,listaJug2/1,maxFila/1,maxColumna/1,
+:- dynamic 	tablero/8,bloqueado/1,listaJug1/1,listaJug2/1,maxFila/1,maxColumna/1,
 			listaCambiar/1,listaAuxiliar/1,listaMovimientos/1.
 
 % Referente a la máquina
@@ -65,7 +65,8 @@ dibujaTablero:-
 		write('6'),write('      '),write(F0),write('     '),write(F1),write('     '),write(F2),write('     '),write(F3),write('     '),write(F4),write('     '),write(F5),write('     '),write(F6),write('     '),write(F7),nl,nl,
 		write('7'),write('      '),write(G0),write('     '),write(G1),write('     '),write(G2),write('     '),write(G3),write('     '),write(G4),write('     '),write(G5),write('     '),write(G6),write('     '),write(G7),nl,nl,
 		write('8'),write('      '),write(H0),write('     '),write(H1),write('     '),write(H2),write('     '),write(H3),write('     '),write(H4),write('     '),write(H5),write('     '),write(H6),write('     '),write(H7),nl,
-		write('___________________________________________________________'),nl,nl.
+		write('___________________________________________________________'),nl,nl,
+		write('Para salir del juego introduce un valor menor que 1'),nl,nl.
 		
 % ------------------------------------------------------------------------------------------------------------------------	
 
@@ -165,11 +166,11 @@ dificultad(Dificultad):-
 		write('___________________________________________________________'),nl,nl,
 		(
 			Respuesta == 1 -> 
-			Dificultad = 1
+			Dificultad = 2
 			;
 			(
 				Respuesta == 2 -> 
-				Dificultad = 2
+				Dificultad = 4
 				;
 				dificultad(Dificultad)
 			)		
@@ -190,9 +191,9 @@ escribeFichasRestantes(NumPiezas):-
 
 % ------------------------------------------------------------------------------------------------------------------------				
 	
-% damePosicionesAdyacentes(+,+,-) Devuelve las posiciones adyacentes a una posición dada
+% damePosicionesAdyacentes(+,-) Devuelve en una lista las posiciones adyacentes a una posición dada
 
-damePosicionesAdyacentes(Fila,Columna,PosicionesAdyacentes):-
+damePosicionesAdyacentes((Fila,Columna),PosicionesAdyacentes):-
 		maxFila(MF),
 		maxColumna(MC),
 		ColumnaAnterior is Columna - 1,
@@ -221,9 +222,9 @@ damePosicionesAdyacentes(Fila,Columna,PosicionesAdyacentes):-
 		;
 		false.
 	
-% ------------------------------------------------------------------------------------------------------------------------			
+% ------------------------------------------OPERACIONES SOBRE LISTAS-----------------------------------------------------------			
 
-% contieneElemento(+,+) Mira si en la lista pasada por parámetro contiene el elemento pasado por parámetro.
+% contieneElemento(+,+) Acierta si en la lista pasada por parámetro existe el elemento pasado por parámetro.
 
 contieneElemento(X,[]):- false.
 contieneElemento(X,[X|Xs]):- true.
@@ -233,7 +234,7 @@ contieneElemento2(X,[]):- false.
 contieneElemento2((A,B),[(A,B,_)|Xs]):- true.
 contieneElemento2(X,[Y|Ys]):- contieneElemento2(X,Ys).
 
-% existenComunes(+,+) Mira si en la segunda lista pasada por parámetro contiene algún elemento de la primera lista.
+% existenComunes(+,+) Acierta si en la segunda lista pasada por parámetro existe algún elemento de la primera lista.
 
 existenComunes([],_):-	false.
 existenComunes([X|Xs],[X|Ys]):- true.
@@ -251,7 +252,7 @@ borrar(_,[],[]).
 borrar(X,[X|C],M):-!,borrar(X,C,M).
 borrar(X,[Y|L1],[Y|L2]):- borrar(X,L1,L2).	
 
-% eliminaElementos(+,+,-) Borra todas las aparaciones en una lista L2 de los elementos de una lista L1
+% eliminaElementos(+,+,-) Borra todas las aparaciones en una lista L2 de los elementos que existen en una lista L1
 	
 eliminaElementos([],Y,Y).
 eliminaElementos([X|Xs],Ys,Zs):-member(X,Ys),borrar(X,Ys,Ts),eliminaElementos(Xs,Ts,Zs).
@@ -263,12 +264,12 @@ eliminaRepetidos([],[]).
 eliminaRepetidos([H|T],S):-member(H,T),!,eliminaRepetidos(T,S).
 eliminaRepetidos([H|T],[H|S]):-eliminaRepetidos(T,S). 
 
-% insertaElemento((+Fila,+Columna),+Lista,-NuevaLista)
+% insertaElemento(+,+,-) Inserta en una lista un elemento pasado por parámetro
 
 insertaElemento(E,[],[E]).
 insertaElemento(E,Xs,[E|Xs]).
 
-% insertaElementos((+ListaX,+ListaY,-NuevaLista)
+% insertaElementos(+,+,-) Inserta en una lista L2 los elementos de una lista L1
 
 insertaElementos([],Y,Y).
 insertaElementos([X|Xs],Ys,Z):- insertaElementos(Xs,[X|Ys],Z).
@@ -299,57 +300,12 @@ dameValor(_,[],_):-
 dameValor(X,[_|R],P):-
 dameValor(X,R,P). 
 	
-
 % longitud(+,-) Devuelve la longitud de una lista 
 
 longitud([],0).
 longitud([_|L],T):-
 longitud(L,T1),
 T is T1+1. 	
-	
-% ------------------------------------------------------------------------------------------------------------------------			
-
-% existeFichaOponenteCerca(+,+,+) Comprueba si en las 8 posiciones adyacentes de una casilla existe una ficha del oponente (Los límites son casos particulares)
-
-existeFichaOponenteCerca(Fila,Columna,Jug):-
-		
-		% write('Entra en existeFichaOponenteCerca'),nl,
-		
-		damePosicionesAdyacentes(Fila,Columna,PosicionesAdyacentes),
-		
-		 (	Jug = 1	->
-			listaJug2(X),
-			existenComunes(X,PosicionesAdyacentes) % Determina si en las posiciones adyacentes hay una ficha del oponente
-			;
-			( Jug = 2	->
-				listaJug1(Y),
-				existenComunes(Y,PosicionesAdyacentes) % Determina si en las posiciones adyacentes hay una ficha del jugador
-				;
-				false
-			)
-		).
-
-% ------------------------------------------------------------------------------------------------------------------------
-
-% estaOcupada(+,+) Mira si la posición (Fila,Columna) ya está ocupada por otra ficha
-
-estaOcupada(Fila,Columna):-
-	
-	% write('Entra en estaOcupada'),nl,
-	listaJug1(X),
-	listaJug2(Y),
-	( 
-		contieneElemento((Fila,Columna),X);
-		contieneElemento((Fila,Columna),Y)
-	)
-	->	
-		% write('eO: Posicion ocupada'),nl,
-		true
-	;
-		% write('eO: Posicion no ocupada'),nl,
-		false.	
-	
-% ------------------------------------------------------------------------------------------------------------------------		
 
 % dameComunes(+,+,-) Devuelve los elementos comunes a las dos listas que se pasan por parámetro
 
@@ -369,22 +325,64 @@ dameComunes([X|Xs],Ys,Zs):-
 	dameComunes(Xs,Ys,Zs).
 	
 	
-% ------------------------------------------------------------------------------------------------------------------------	
+% ------------------------------------------------------------------------------------------------------------------------			
 
-% dameFichasAdyacentesJugador(+,+,+,-) Devuelve la posición de las fichas adyacentes del jugador Jug a la posición (Fila,Columna) 
+% existeFichaOponenteCerca(+,+) Comprueba si en las 8 posiciones adyacentes de una casilla existe una ficha del oponente (Los límites son casos particulares)
 
-dameFichasAdyacentesJugador(Fila,Columna,Jug,PosicionesAdyacentes):-
+existeFichaOponenteCerca(W,Jug):-
+		
+		% write('Entra en existeFichaOponenteCerca'),nl,
+		
+		damePosicionesAdyacentes(W,PosicionesAdyacentes),
+		
+		 (	Jug = 1	->
+			listaJug2(X),
+			existenComunes(X,PosicionesAdyacentes) % Determina si en las posiciones adyacentes hay una ficha del oponente
+			;
+			( Jug = 2	->
+				listaJug1(Y),
+				existenComunes(Y,PosicionesAdyacentes) % Determina si en las posiciones adyacentes hay una ficha del jugador
+				;
+				false
+			)
+		).
 
-	% write('Entra en dameFichasAdyacentesJugador'),nl,
+% ------------------------------------------------------------------------------------------------------------------------
+
+% estaOcupada(+) Acierta si la posición pasada por parámetro ya está ocupada por otra ficha
+
+estaOcupada(W):-
+	
+	% write('Entra en estaOcupada'),nl,
 	listaJug1(X),
 	listaJug2(Y),
+	( 
+		contieneElemento(W,X);
+		contieneElemento(W,Y)
+	)
+	->	
+		% write('eO: Posicion ocupada'),nl,
+		true
+	;
+		% write('eO: Posicion no ocupada'),nl,
+		false.	
+	
+% ------------------------------------------------------------------------------------------------------------------------	
+
+% dameFichasAdyacentesJugador(+,+,-) Devuelve la posición de las fichas adyacentes del jugador Jug a la posición (Fila,Columna) 
+
+dameFichasAdyacentesJugador(X,Jug,PosicionesAdyacentes):-
+
+	% write('Entra en dameFichasAdyacentesJugador'),nl,
+	listaJug1(W),
+	listaJug2(Y),
 	(Jug = 1 ->
-		damePosicionesAdyacentes(Fila,Columna,Adyacentes),  % Posiciones adyacentes a la posición (Fila,Columna)
+		damePosicionesAdyacentes(X,Adyacentes),  % Posiciones adyacentes a la posición (Fila,Columna)
 		dameComunes(Y,Adyacentes,PosicionesAdyacentes)		% Devuelve las fichas del oponente que están en las posiciones adyacentes
 		;
 		(Jug = 2 ->
-			damePosicionesAdyacentes(Fila,Columna,Adyacentes),
-			dameComunes(X,Adyacentes,PosicionesAdyacentes)
+			damePosicionesAdyacentes(X,Adyacentes),
+			dameComunes(W,Adyacentes,PosicionesAdyacentes)
 			;
 			PosicionesAdyacentes = []
 		)	
@@ -392,9 +390,9 @@ dameFichasAdyacentesJugador(Fila,Columna,Jug,PosicionesAdyacentes):-
 	
 % ------------------------------------------------------------------------------------------------------------------------
 
-% encuentraFinalFlanqueo(+)	Verifica si un posible recorrido de flanqueo es un flanqueo válido
+% encuentraFinalFlanqueo(+,+,+,+)	Verifica si un posible recorrido de flanqueo es un flanqueo válido
 
-encuentraFinalFlanqueo(F,C,Jug,NewDespF,NewDespC):-
+encuentraFinalFlanqueo((F,C),Jug,NewDespF,NewDespC):-
 
 	% write('Entra en encuentraFinalFlanqueo '),nl,
 	
@@ -417,7 +415,7 @@ encuentraFinalFlanqueo(F,C,Jug,NewDespF,NewDespC):-
 				
 				!,	% Evita la reevaluación de un estado previo cuando se realiza backtraking
 				% Continua el recorrido
-				encuentraFinalFlanqueo(NewF,NewC,Jug,NewDespF,NewDespC);
+				encuentraFinalFlanqueo((NewF,NewC),Jug,NewDespF,NewDespC);
 		
 		Jug = 1, 
 				% Comprueba que la siguiente ficha pertenece al jugador -> Final del flanqueo
@@ -435,7 +433,7 @@ encuentraFinalFlanqueo(F,C,Jug,NewDespF,NewDespC):-
 				assertz(listaAuxiliar(NewFlanqueo)),				
 				!,
 				% write('eFF:	Sigue la busqueda '),nl,
-				encuentraFinalFlanqueo(NewF,NewC,Jug,NewDespF,NewDespC);
+				encuentraFinalFlanqueo((NewF,NewC),Jug,NewDespF,NewDespC);
 		
 		Jug = 2, 
 				
@@ -448,11 +446,11 @@ encuentraFinalFlanqueo(F,C,Jug,NewDespF,NewDespC):-
 	
 % ------------------------------------------------------------------------------------------------------------------------			
 
-% comprobarFlanqueos(Fila,Columna,Adyacentes,Jug) Mira si existe falqueo en todas las posibles direcciones dibujadas tomando como origen la ficha (Fila,Columna) 
-%												y como sentido todas las fichas adyacentes del oponente
+% comprobarFlanqueos(+,+,+) Mira si existe falqueo en todas las posibles direcciones dibujadas tomando como origen la ficha (Fila,Columna) 
+%							y como sentido todas las fichas adyacentes del oponente
 
-comprobarFlanqueos(Fila,Columna,[],Jug).
-comprobarFlanqueos(Fila,Columna,[(F,C)|Xs],Jug):-
+comprobarFlanqueos(X,[],Jug).
+comprobarFlanqueos((Fila,Columna),[(F,C)|Xs],Jug):-
 	
 	% write('Entra en comprobarFlanqueos'),nl,nl,
 		
@@ -463,7 +461,7 @@ comprobarFlanqueos(Fila,Columna,[(F,C)|Xs],Jug):-
 	NewDespC is (SumColumna * (-1)),
 	
 	(	% Si existe un flanqueo válido, se inserta el recorrido el lista de elementos a cambiar de propietario
-		encuentraFinalFlanqueo(F,C,Jug,NewDespF,NewDespC) ->
+		encuentraFinalFlanqueo((F,C),Jug,NewDespF,NewDespC) ->
 			listaAuxiliar(O),			
 			listaCambiar(P),
 			insertaElementos(O,P,AuxCambiar),
@@ -478,27 +476,25 @@ comprobarFlanqueos(Fila,Columna,[(F,C)|Xs],Jug):-
 			retract(listaAuxiliar(_N)), 
 			assertz(listaAuxiliar([]))
 	),
-	comprobarFlanqueos(Fila,Columna,Xs,Jug). 
+	comprobarFlanqueos((Fila,Columna),Xs,Jug). 
 	
 % ------------------------------------------------------------------------------------------------------------------------			
 
-% existeFlanqueo(+,+,+) Comprueba si al menos existe un flaqueo, es decir, si partiendo de la ficha (Fila,Columna) y siguiendo una
+% existeFlanqueo(+,+) Comprueba si al menos existe un flaqueo, es decir, si partiendo de la ficha (Fila,Columna) y siguiendo una
 % 						de las posibles direcciones en las que hay adyacente al menos una ficha del oponente nos encontraremos con otra ficha del jugador.
 
-existeFlanqueo(Fila,Columna,Jug):-
+existeFlanqueo(X,Jug):-
 
 	% write('Entra en existeFlanqueo '),nl,
 
-	dameFichasAdyacentesJugador(Fila,Columna,Jug,Adyacentes),
+	dameFichasAdyacentesJugador(X,Jug,Adyacentes),
 	% write('eF:	Posiciones adyacentes del oponente: '),muestraFichas(Adyacentes),nl,nl,	
 		
-	% calculaDesplazamientos(Fila,Columna,Adyacentes),	
-		
-	listaAuxiliar(X),
-	retract(listaAuxiliar(_X)),
+	listaAuxiliar(Y),
+	retract(listaAuxiliar(_Y)),
 	assertz(listaAuxiliar([])),
 	
-	comprobarFlanqueos(Fila,Columna,Adyacentes,Jug), !,
+	comprobarFlanqueos(X,Adyacentes,Jug), !,
 	
 	listaCambiar(Z),
 	
@@ -514,13 +510,16 @@ existeFlanqueo(Fila,Columna,Jug):-
 	
 % posicionValida(+,+,+) Comprueba si la posición (Fila,Columna) es válida y devuelve las fichas que cambian de propietario
 	
-posicionValida(Fila,Columna,Jug):-
+posicionValida(X,Jug):-
 		
-	(estaOcupada(Fila,Columna)	->
+	% Comprueba que la posición no esté ocupada por el oponente
+	(estaOcupada(X)	->
 		false
-		;		
-		(existeFichaOponenteCerca(Fila,Columna,Jug)	->
-			(existeFlanqueo(Fila,Columna,Jug) ->
+		;
+		% Verifica que haya al menos una ficha del oponente cerca
+		(existeFichaOponenteCerca(X,Jug)	->
+			% Comprueba que exista al menos un flanqueo válido
+			(existeFlanqueo(X,Jug) ->
 				true
 				;
 				false			
@@ -567,7 +566,7 @@ cambiaFicha([A,B,C,D,E,F,G,H],Fila,Columna,Jug,[Ac,Bc,Cc,Dc,Ec,Fc,Gc,Hc]):-
 	;
 	false.
 
-% cambiaFicha(+,+,+,-) Cambia las fichas de las posiciones de la lista pasado por parámetro de propietario
+% cambiaFicha(+,+,+,-) Cambia las fichas de la lista pasada por parámetro de propietario
 	
 cambiaFichas(Tablero,[],Jug,Tablero).
 cambiaFichas(Tablero,[(F,C)|Xs],Jug,NewTablero):- cambiaFicha(Tablero,F,C,Jug,AnotherTablero), cambiaFichas(AnotherTablero,Xs,Jug,NewTablero).
@@ -575,15 +574,16 @@ cambiaFichas(Tablero,[(F,C)|Xs],Jug,NewTablero):- cambiaFicha(Tablero,F,C,Jug,An
 			
 % ------------------------------------------------------------------------------------------------------------------------			
 	
-% colocaFicha(+,+,+,-) Coloca la ficha del jugador Jug en la posicion (Fila,Columna) y devuelve las fichas que cambian de propietario 
+% colocaFicha(+,+,+,+,-) Coloca la ficha del jugador Jug en la posicion (Fila,Columna) y devuelve las fichas que cambian de propietario 
 
-colocaFicha([A,B,C,D,E,F,G,H],Fila,Columna,Jug,[Ac,Bc,Cc,Dc,Ec,Fc,Gc,Hc],X):-
+colocaFicha([A,B,C,D,E,F,G,H],(Fila,Columna),Jug,[Ac,Bc,Cc,Dc,Ec,Fc,Gc,Hc],X):-
 		
 		listaCambiar(Y),
 		retract(listaCambiar(_Y)),
 		assertz(listaCambiar([])),
 		
-		(posicionValida(Fila,Columna,Jug) ->
+		% Comprueba que la posición es válida
+		(posicionValida((Fila,Columna),Jug) ->
 			listaCambiar(X),
 			(	
 				Fila = 1,ponFicha(Columna,Jug,A,Ac),Bc = B, Cc = C, Dc = D, Ec = E, Fc = F, Gc = G, Hc = H;
@@ -650,21 +650,23 @@ cambiarFichasDePropietario(X,Jug):-
 		
 % ------------------------------------------------------------------------------------------------------------------------	
 	
-% colocaFichaJugador(+,+,+) Coloca la ficha del usuario en la posicion especificada por parámetros si es una posición válida.
+% colocaFichaJugador(+,+) Coloca la ficha del usuario en la posicion especificada por parámetros si es una posición válida.
 
-colocaFichaJugador(NumFichas, Fila, Columna):-
+colocaFichaJugador(NumFichas, X):-
 	
 	tablero(A,B,C,D,E,F,G,H),
 	
-	(colocaFicha([A,B,C,D,E,F,G,H],Fila,Columna,1,[Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],FichasACambiar) ->	   
+	% Se comprueba que el movimiento del jugador es válido, es decir, la ficha añadida se ha colocado en una posición válida
+	% da auerdo a las reglas del juego
+	(colocaFicha([A,B,C,D,E,F,G,H],X,1,[Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],FichasACambiar) ->	   
 	   
 		% Se registra el nuevo tablero
 		retract(tablero(_A,_B,_C,_D,_E,_F,_G,_H)),
 		assertz(tablero(Ar,Br,Cr,Dr,Er,Fr,Gr,Hr)),
 
-		listaJug1(X),									% Se "invoca" la lista del jugador para tratarla			
-		insertaElemento((Fila,Columna),X,NewFichas),		% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
-		retract(listaJug1(_X)),							% Se elimina la lista de fichas actual del jugador
+		listaJug1(Y),									% Se "invoca" la lista del jugador para tratarla			
+		insertaElemento(X,Y,NewFichas),		% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
+		retract(listaJug1(_Y)),							% Se elimina la lista de fichas actual del jugador
 		assertz(listaJug1(NewFichas)),	   				% Se inserta la nueva lista de fichas del jugador
 
 		cambiarFichasDePropietario(FichasACambiar,1),	% Se cambia las fichas flanqueadas de propietario 
@@ -679,6 +681,9 @@ colocaFichaJugador(NumFichas, Fila, Columna):-
 	).	
 		
 % ------------------------------------------------------------------------------------------------------------------------			
+
+% jugadorBloqueado(+) Acierta si existe al menos un movimiento válido para el jugador en su turno
+
 jugadorBloqueado(Jug):-
 	(	Jug = 1 ->
 			AuxJug = min
@@ -689,6 +694,7 @@ jugadorBloqueado(Jug):-
 	listaCambiar(X),
 	retract(listaCambiar(_X)),
 	assert(listaCambiar([])),
+	% Devuelve los posibles movimientos que existen en el turno del jugador 
 	moves([A,B,C,D,E,F,G,H],AuxJug,M),
 	( M = [] ->
 		true
@@ -698,9 +704,10 @@ jugadorBloqueado(Jug):-
 		
 % ------------------------------------------------------------------------------------------------------------------------	
 	
-% mueveJugador(+) Determina si el jugador está moviendo según la primera o la segunda fase del juego.
+% mueveJugador(+) Determina y válida el movimiento del jugador
 
 movimientoJugador(NumFichas):-
+	
 	( jugadorBloqueado(1) ->
 		bloqueado(X),
 		(	X = 2 -> % El oponente también está bloqueado
@@ -722,7 +729,7 @@ movimientoJugador(NumFichas):-
 				haTerminado
 				;
 				nl,	write('___________________________________________________________'),nl,nl,
-				colocaFichaJugador(NumFichas,Fila,Columna)
+				colocaFichaJugador(NumFichas,(Fila,Columna))
 			)
 		)
 	).
@@ -734,8 +741,8 @@ mueveMaquina(Prof):-
 		
 	tablero(A,B,C,D,E,F,G,H),
 	listaJug1(X1), listaJug2(X2),
-	minimax([A,B,C,D,E,F,G,H],(Fila,Columna,K),_MejorValor,Prof,X1,X2), % Encuentra el mejor movimiento
-	(colocaFicha([A,B,C,D,E,F,G,H],Fila,Columna,2,[Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],FichasACambiar) ->
+	minimax([A,B,C,D,E,F,G,H],(Fila,Columna),_MejorValor,Prof,X1,X2), % Encuentra el mejor movimiento
+	(colocaFicha([A,B,C,D,E,F,G,H],(Fila,Columna),2,[Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],FichasACambiar) ->
 		write('Movimiento del oponente: '),nl,
 		write('Fila|: '),write(Fila),nl,
 		write('Columna|: '), write(Columna),nl,nl,
@@ -776,8 +783,11 @@ haTerminado:-
 	retractall(juegoAcabado(_)),
 	retractall(tablero(_A,_B,_C,_D,_E,_F,_G,_H)),
 	retractall(fichas(_)),
+	retractall(maxFila(_)),
+	retractall(maxColumna(_)),
 	retractall(listaAuxiliar(_)),
-	retractall(listaMovimientos(_)),	
+	retractall(listaMovimientos(_)),
+	retractall(listaCambiar(_)),	
 	listaJug1(L1),listaJug2(L2),
 	longitud(L1,N1),longitud(L2,N2),
 	( N1 < N2 -> 
@@ -789,7 +799,6 @@ haTerminado:-
 			nl,write('Empate (>___<) '),nl,nl
 		) 
 	),
-	retractall(phase(_)),
 	retractall(listaJug1(_)),
 	retractall(listaJug2(_)),
 	write('Otra partida?(y/n)'),nl,nl,
@@ -830,11 +839,8 @@ bucleJuego(Dificultad):-
 % damePosicionesAdyacentesLibres(+,-):- Devuelve una lista con las posiciones libres adyacentes a una posición dada 
 
 damePosicionesAdyacentesLibres((Fila,Columna), PosicionesAdyacentesLibres):-
-	
-	% write('Entra en damePosicionesAdyacentesLibres'),nl,nl,
-	damePosicionesAdyacentes(Fila,Columna,PosicionesAdyacentes),
-	
-	% write('dPAL:	Para la posicion: '),write(Fila),write(' , '),write(Columna),nl,nl,
+
+	damePosicionesAdyacentes((Fila,Columna),PosicionesAdyacentes),
 	
 	% Se invocan las fichas de ambos jugadores
 	listaJug1(X),
@@ -843,19 +849,13 @@ damePosicionesAdyacentesLibres((Fila,Columna), PosicionesAdyacentesLibres):-
 	% Nos quedamos sólo con las posiciones libres
 	eliminaElementos(X,PosicionesAdyacentes,PosicionesSinFichasJug1),
 	eliminaElementos(Y,PosicionesSinFichasJug1,PosicionesAdyacentesLibres).
-	
-	% write('dPAL:	Posiciones adyacentes libres: '),
-	% muestraFichas(PosicionesAdyacentesLibres),nl,nl.
 
 % ------------------------------------------------------------------------------------------------------------------------
 
-%	existenFlanqueos(PosicionesAdyacentes,Jug)
+%	existenFlanqueos(+,+) Busca todos los posibles flaqueos existentes para el jugador Jug tomando como punto de partida cada elemento de la lista
 
 buscaFlanqueos([],Jug).
 buscaFlanqueos([(Fila,Columna)|Xs],Jug):-
-	
-	% write('Entra en buscaFlanqueos'),nl,nl,
-	% write('eF:	Posicion libre: '),write('(' ),write(Fila ),write(',' ),write(Columna),write(')'),nl,nl,
 			
 	listaCambiar(L), 
 	retract(listaCambiar(_L)), 
@@ -863,29 +863,23 @@ buscaFlanqueos([(Fila,Columna)|Xs],Jug):-
 	
 	listaMovimientos(M),
 	
-	(	existeFlanqueo(Fila,Columna,Jug) ->
+	(	existeFlanqueo((Fila,Columna),Jug) ->
 			
-			( contieneElemento2((Fila,Columna),M) ->
-				
-				dameValor((Fila,Columna),M,Valor),
-				NewValor is Valor + 1,
-				damePosElemento((Fila,Columna),M,Pos),
-				sobreescribirEn((Fila,Columna,NewValor),Pos,M,NewM),
+			( not(contieneElemento((Fila,Columna),M)) ->
+				insertaElemento((Fila,Columna),M,NewM),
 				retract(listaMovimientos(_M)),
 				assertz(listaMovimientos(NewM))
 				;
-				insertaElemento((Fila,Columna,1),M,NewM),
-				retract(listaMovimientos(_M)),
-				assertz(listaMovimientos(NewM))
-			),			
-			buscaFlanqueos(Xs,Jug)
+				buscaFlanqueos(Xs,Jug)
+			)
 		;
 			buscaFlanqueos(Xs,Jug)
 	).
 	
-	% buscaFlanqueos(Xs,Jug).
-	
 % ------------------------------------------------------------------------------------------------------------------------
+
+% compruebaMovimientos(+,+) Comprueba todos los movimientos existentes para el jugador Jug, lo cual se determina con la ayuda de las fichas
+% 							del oponente ya que debe flanquear estas
 
 compruebaMovimientos([],Jug).
 compruebaMovimientos([X|Xs],Jug):-
@@ -909,43 +903,8 @@ compruebaMovimientos([X|Xs],Jug):-
 	
 % ------------------------------------------------------------------------------------------------------------------------
 
-maxFilasTablero(Tablero,MF):-
-	longitud(Tablero,MF).
+% moves(+,+,-) Devuelve en una lista todos los posibles movimientos del jugador Jug
 
-maxColumnasTablero([T|Tablero],MC):-
-	longitud(T,MC).
-
-% jugadorSinFichas(+,+) Acierta si el jugador pasado por parametro está bloqueado
-jugadorSinFichas(Tablero,Jug):-
-	(Jug = 1 ->
-	 listaJug1(Lista)
-	 ;
-	 listaJug2(Lista)
-	),
-	longitud(Lista, Long),
-	maxFilasTablero(Tablero,MF),
-	maxColumnasTablero(Tablero,MC),
-	numFichas is ((MF * MC)/2),
-	(Long = numFichas ->
-		true
-	;
-		false
-	).
-
-% rival(+,-) Saca por el segundo parametro quien es el rival del primero
-rival(Jugador,Rival):-
-	(Jugador = 2 -> Rival = 1
-		;
-		Rival = 2
-	).
-	
-% rivalSinFichas(+,+) Acierta si el rival esta bloqueado
-rivalSinFichas(Tablero, Jugador):-
-	rival(Jugador,Rival),
-	jugadorSinFichas(Tablero,Rival).
-	
-% ------------------------------------------------------------------------------------------------------------------------
-	
 moves(Tablero,Jug,M):-
 	
 	listaCambiar(P),
@@ -964,28 +923,34 @@ moves(Tablero,Jug,M):-
 			compruebaMovimientos(X,2)
 	),
 	
-	listaMovimientos(M),
-	listaCambiar(Y).
-	
-	% write('cM:	Posiciones a cambiar de propietario: '),muestraFichas(Y),nl,nl,
-	% write('cM:	Movimientos posibles: '),muestraFichas(M),nl,nl,
+	listaMovimientos(M).
 	
 
-%  ponFicha(+,+,+,+,+,-,-,-) Devuelve en NuevoTablero el movimiento de posicionar la ficha del Jugador en Pos, 
-% X1 es la lista de las fichas del jugador 1 y X2 del jugador 2
+%  	ponFicha(+,+,+,+,+,-,-,-) Devuelve en NuevoTablero el movimiento de posicionar la ficha del Jugador en Pos, 
+% 	X1 es la lista de las fichas del jugador 1 y X2 del jugador 2
 
-put(Tablero,(Fila,Columna,K),Jugador,X1,X2,NuevoTablero, NX1, NX2):-
+put(Tablero,X,Jugador,X1,X2,NuevoTablero, NX1, NX2):-
 	
 	[A,B,C,D,E,F,G,H] = Tablero,
-	colocaFicha([A,B,C,D,E,F,G,H],Fila,Columna,Jugador,[Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],FichasACambiar),
+	colocaFicha([A,B,C,D,E,F,G,H],X,Jugador,[Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],FichasACambiar),
 	NuevoTablero = [Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],
 	
 	( Jugador  = 1 ->
-		insertaElemento((Fila,Columna),X1,NX1)	     		% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
+		insertaElemento(X,X1,NX1)	     		% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
 		;
-		insertaElemento((Fila,Columna),X2,NX2)   			% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
+		insertaElemento(X,X2,NX2)   			% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
 	).	
 
+% ------------------------------------------------------------------------------------------------------------------------
+
+maxFilasTablero(Tablero,MF):-
+	longitud(Tablero,MF).
+
+maxColumnasTablero([T|Tablero],MC):-
+	longitud(T,MC).
+
+	
+% Devuelve el número de fichas agrupadas del Jugador en una determinada lista	
 	
 dameNumGruposFichasAdyacentes([],Jugador,ListaJug1,ListaJug2,Num,L,LongL):-
 	( Num > 1 ->
@@ -1029,6 +994,7 @@ dameNumGruposFichasAdyacentes([X|Xs],Jugador,ListaJug1,ListaJug2,Num,L,LongL):-
 		)
 	).
 	
+% Devuelve el número de fichas agrupadas del Jugador en todas las filas
 	
 fichasAgrupadasPorFila([A,B,C,D,E,F,G,H],Jugador,0,ListaJug1,ListaJug2,R,R).
 fichasAgrupadasPorFila([A,B,C,D,E,F,G,H],Jugador,Fila,ListaJug1,ListaJug2,R,RFinal):-	
@@ -1046,6 +1012,8 @@ fichasAgrupadasPorFila([A,B,C,D,E,F,G,H],Jugador,Fila,ListaJug1,ListaJug2,R,RFin
 	NewFila is Fila - 1,
 	fichasAgrupadasPorFila([A,B,C,D,E,F,G,H],Jugador,NewFila,ListaJug1,ListaJug2,RAux,RFinal).
 	
+
+% Devuelve el número de fichas agrupadas del Jugador en todas las columnas
 	
 fichasAgrupadasPorColumna([A,B,C,D,E,F,G,H],Jugador,0,ListaJug1,ListaJug2,R,R).
 fichasAgrupadasPorColumna([	[A0,A1,A2,A3,A4,A5,A6,A7],
