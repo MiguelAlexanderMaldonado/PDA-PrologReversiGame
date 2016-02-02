@@ -16,8 +16,7 @@
 
 :- use_module(heuristica,
         [ 
-			value/5,
-			win/3
+			value/5
 		]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -39,7 +38,15 @@
 
 :- dynamic bounds/1.
 
-:- asserta(bounds(-10000000/10000000)).
+% Mejor y peor de los casos: 
+	
+%	(200 + 200): Uno de los jugadores tiene más fichas haga lo que haga el otro
+%	48:	Número máximo de grupos de fichas en filas y columnas (3 grupos por cada línea)
+%	x -----------
+%	19200
+
+:- asserta(bounds(0/100000)). 
+
 % X1 y X2 son las listas de donde se encuentran las fichas de cada jugador
 minimax(Board, BestMove, BestValue, Depth, X1, X2) :-
   Depth > 0,

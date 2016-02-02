@@ -163,11 +163,11 @@ dificultad(Dificultad):-
 		write('___________________________________________________________'),nl,nl,
 		(
 			Respuesta == 1 -> 
-			Dificultad = 2
+			Dificultad = 1
 			;
 			(
 				Respuesta == 2 -> 
-				Dificultad = 4
+				Dificultad = 2
 				;
 				dificultad(Dificultad)
 			)		
@@ -271,32 +271,6 @@ insertaElemento(E,Xs,[E|Xs]).
 insertaElementos([],Y,Y).
 insertaElementos([X|Xs],Ys,Z):- insertaElementos(Xs,[X|Ys],Z).
 
-% damePosElemento(+,+,-) Devuelve la posición en que se encuentra un elemento X en una lista
-
-damePosElemento((A,B),[(A,B,_)|_],0).
-damePosElemento(_,[],_):-
-!,fail.
-damePosElemento(X,[_|R],Pos):-
-damePosElemento(X,R,Pos1),
-Pos is Pos1+1. 
-
-% sobreescribirEn(+,+,+,-) Sustituye el elemento X en la posición N de una lista por el elemento pasado por parámetro 
-
-sobreescribirEn(_,_,[],[]).
-sobreescribirEn((A,B,C),0,[_|R],[(A,B,C)|R1]):-
-sobreescribirEn(Elem,-1,R,R1),!.
-sobreescribirEn(Elem,Pos,[C|R],[C|R1]):-
-ColTemp is Pos -1,
-sobreescribirEn(Elem,ColTemp,R,R1). 
-
-% dameValor(+,+,-) Devuelve el valor V de un lemento X siendo; X = (A,B,V) y valor = V 
-
-dameValor((A,B),[(A,B,C)|_],C).
-dameValor(_,[],_):-
-!,fail.
-dameValor(X,[_|R],P):-
-dameValor(X,R,P). 
-	
 % longitud(+,-) Devuelve la longitud de una lista 
 
 longitud([],0).
@@ -601,41 +575,17 @@ colocaFicha([A,B,C,D,E,F,G,H],(Fila,Columna),Jug,[Ac,Bc,Cc,Dc,Ec,Fc,Gc,Hc],X):-
 
 % cambiarFichasDePropietario(+,+) Cambia de propietario las fichas de todos los flanqueos válidos, se pasa por parámetro las fichas a cambiar
 		
-cambiarFichasDePropietario(X,Jug):-
+cambiarFichasDePropietario(Jug1,Jug2,X,Jug,NewJug1,NewJug2):-
 
-	tablero(A,B,C,D,E,F,G,H),
-	listaJug1(M),
-	listaJug2(N),
-	
 	( 	Jug = 1 ->
-			insertaElementos(X,M,NewJug1),
-			retract(listaJug1(_M)),
-			assert(listaJug1(NewJug1)),
-			
-			eliminaElementos(X,N,NewJug2),
-			retract(listaJug2(_N)),
-			assert(listaJug2(NewJug2)),
-			
-			cambiaFichas([A,B,C,D,E,F,G,H],X,1,[Ar,Br,Cr,Dr,Er,Fr,Gr,Hr]),
-			retract(tablero(_A,_B,_C,_D,_E,_F,_G,_H)),
-			assertz(tablero(Ar,Br,Cr,Dr,Er,Fr,Gr,Hr)),
-	   
+			insertaElementos(X,Jug1,NewJug1),			
+			eliminaElementos(X,Jug2,NewJug2),	   
 			retract(listaCambiar(_X)),
 			assert(listaCambiar([]))
 		;
 		(Jug = 2 ->
-			insertaElementos(X,N,NewJug2),
-			retract(listaJug2(_N)),
-			assert(listaJug2(NewJug2)),
-			
-			eliminaElementos(X,M,NewJug1),
-			retract(listaJug1(_M)),
-			assert(listaJug1(NewJug1)),
-			
-			cambiaFichas([A,B,C,D,E,F,G,H],X,2,[Ar,Br,Cr,Dr,Er,Fr,Gr,Hr]),
-			retract(tablero(_A,_B,_C,_D,_E,_F,_G,_H)),
-			assertz(tablero(Ar,Br,Cr,Dr,Er,Fr,Gr,Hr)),
-			
+			insertaElementos(X,Jug2,NewJug2),			
+			eliminaElementos(X,Jug1,NewJug1),
 			retract(listaCambiar(_X)),
 			assert(listaCambiar([]))
 		;		
@@ -661,12 +611,24 @@ colocaFichaJugador(NumFichas, X):-
 		assertz(tablero(Ar,Br,Cr,Dr,Er,Fr,Gr,Hr)),
 
 		listaJug1(Y),									% Se "invoca" la lista del jugador para tratarla			
-		insertaElemento(X,Y,NewFichas),		% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
-		retract(listaJug1(_Y)),							% Se elimina la lista de fichas actual del jugador
-		assertz(listaJug1(NewFichas)),	   				% Se inserta la nueva lista de fichas del jugador
+		insertaElemento(X,Y,NewFichas),					% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
 
-		cambiarFichasDePropietario(FichasACambiar,1),	% Se cambia las fichas flanqueadas de propietario 
+		listaJug2(Z),	
+		
+		cambiarFichasDePropietario(NewFichas,Z,FichasACambiar,1,NewJug1,NewJug2),	% Se cambia las fichas flanqueadas de propietario 
 
+		% Se asertan las nuevas listas
+		retract(listaJug1(_Y)),
+		assert(listaJug1(NewJug1)),		
+		retract(listaJug2(_Z)),
+		assert(listaJug2(NewJug2)),
+		
+		% Se cambian las fichas en el tablero		
+		cambiaFichas([Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],FichasACambiar,1,[As,Bs,Cs,Ds,Es,Fs,Gs,Hs]),
+		retract(tablero(_Ar,_Br,_Cr,_Dr,_Er,_Fr,_Gr,_Hr)),
+		assertz(tablero(As,Bs,Cs,Ds,Es,Fs,Gs,Hs)),
+		
+		
 		FichasRestantes is NumFichas - 1,
 		retract(fichas(NumFichas)),
 		assertz(fichas(FichasRestantes))
@@ -752,14 +714,24 @@ mueveMaquina(Prof):-
 		retract(tablero(_A,_B,_C,_D,_E,_F,_G,_H)),
 		assertz(tablero(Ar,Br,Cr,Dr,Er,Fr,Gr,Hr)),
 		   
-		listaJug2(X),									% Se "invoca" la lista del jugador para tratarla			
+		listaJug2(X),										% Se "invoca" la lista del jugador para tratarla			
 		insertaElemento((Fila,Columna),X,NewFichas),		% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
-		retract(listaJug2(_X)),							% Se elimina la lista de fichas actual del jugador
-		assertz(listaJug2(NewFichas)),	   				% Se inserta la nueva lista de fichas del jugador
-
-		cambiarFichasDePropietario(FichasACambiar,2),	% Se cambia las fichas flanqueadas de propietario 
+		listaJug1(Y),
+		
+		cambiarFichasDePropietario(Y,NewFichas,FichasACambiar,2,NewJug1,NewJug2),	% Se cambia las fichas flanqueadas de propietario 
+		
+		% Se asertan las nuevas listas
+		retract(listaJug1(_Y)),
+		assert(listaJug1(NewJug1)),		
+		retract(listaJug2(_X)),
+		assert(listaJug2(NewJug2)),
+		
+		% Se cambian las fichas en el tablero		
+		cambiaFichas([Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],FichasACambiar,2,[As,Bs,Cs,Ds,Es,Fs,Gs,Hs]),
+		retract(tablero(_Ar,_Br,_Cr,_Dr,_Er,_Fr,_Gr,_Hr)),
+		assertz(tablero(As,Bs,Cs,Ds,Es,Fs,Gs,Hs)),
+		
 		dibujaTablero,
-		% fichas(FichasRestantes),
 		escribeFichasRestantes(FichasRestantes)
 		;
 		write('Movimiento del oponente: NO EXISTE ALGUNO POSIBLE'),nl,nl,
@@ -915,17 +887,22 @@ moves(Tablero,Jug,M):-
 %  	ponFicha(+,+,+,+,+,-,-,-) Devuelve en NuevoTablero el movimiento de posicionar la ficha del Jugador en Pos, 
 % 	X1 es la lista de las fichas del jugador 1 y X2 del jugador 2
 
-put(Tablero,X,Jugador,X1,X2,NuevoTablero, NX1, NX2):-
+put(Tablero,X,Jugador,X1,X2,NuevoTablero, NewNX1, NewNX2):-
 	
 	[A,B,C,D,E,F,G,H] = Tablero,
 	colocaFicha([A,B,C,D,E,F,G,H],X,Jugador,[Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],FichasACambiar),
-	NuevoTablero = [Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],
-	
+		
 	( Jugador  = 1 ->
-		insertaElemento(X,X1,NX1)	     		% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
+		insertaElemento(X,X1,NX1),											% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
+		cambiarFichasDePropietario(NX1,X2,FichasACambiar,1,NewNX1,NewNX2),	% Se cambia las fichas flanqueadas de propietario
+		cambiaFichas([Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],FichasACambiar,1,[As,Bs,Cs,Ds,Es,Fs,Gs,Hs]) % Se cambia las fichas en el tablero
 		;
-		insertaElemento(X,X2,NX2)   			% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
-	).	
+		insertaElemento(X,X2,NX2),   										% Inserta la posición de la ficha colocada por el jugador a su lista de fichas
+		cambiarFichasDePropietario(X1,NX2,FichasACambiar,2,NewNX1,NewNX2),	% Se cambia las fichas flanqueadas de propietario
+		cambiaFichas([Ar,Br,Cr,Dr,Er,Fr,Gr,Hr],FichasACambiar,2,[As,Bs,Cs,Ds,Es,Fs,Gs,Hs]) % Se cambia las fichas flanqueadas de propietario 
+	),
+	NuevoTablero = [As,Bs,Cs,Ds,Es,Fs,Gs,Hs].
+	
 
 % ------------------------------------------OPERACIONES HURISTICA-----------------------------------------------------------------------
 
@@ -938,7 +915,7 @@ maxColumnasTablero([T|Tablero],MC):-
 	
 % Devuelve el número de fichas agrupadas del Jugador en una determinada lista	
 	
-dameNumGruposFichasAdyacentes([],Jugador,ListaJug1,ListaJug2,Num,L,LongL):-
+dameNumGruposFichasAdyacentes([],Jugador,Num,L,LongL):-
 	( Num > 1 ->
 		insertaElemento(Num,L,NewL),
 		longitud(NewL,NewLongL),
@@ -948,33 +925,33 @@ dameNumGruposFichasAdyacentes([],Jugador,ListaJug1,ListaJug2,Num,L,LongL):-
 		LongL is NewLongL
 	).
 
-dameNumGruposFichasAdyacentes([X|Xs],Jugador,ListaJug1,ListaJug2,Num,L,LongL):-
+dameNumGruposFichasAdyacentes([X|Xs],Jugador,Num,L,LongL):-
 	
 	(Jugador = 1 ->
-		(contieneElemento(X,ListaJug1) ->
+		(X = 1 ->
 			NewNum is Num + 1,
-			dameNumGruposFichasAdyacentes(Xs,Jugador,ListaJug1,ListaJug2,NewNum,L,LongL)
+			dameNumGruposFichasAdyacentes(Xs,Jugador,NewNum,L,LongL)
 			;
 			( Num > 1 ->
 				insertaElemento(Num,L,NewL),
 				NewNum is 0,
-				dameNumGruposFichasAdyacentes(Xs,Jugador,ListaJug1,ListaJug2,NewNum,NewL,LongL)
+				dameNumGruposFichasAdyacentes(Xs,Jugador,NewNum,NewL,LongL)
 				;
-				dameNumGruposFichasAdyacentes(Xs,Jugador,ListaJug1,ListaJug2,0,L,LongL)
+				dameNumGruposFichasAdyacentes(Xs,Jugador,0,L,LongL)
 			)
 			
 		)
 		;
-		(contieneElemento(X,ListaJug2) ->
+		(X = 2 ->
 			NewNum is Num + 1,
-			dameNumGruposFichasAdyacentes(Xs,Jugador,ListaJug1,ListaJug2,NewNum,L,LongL)
+			dameNumGruposFichasAdyacentes(Xs,Jugador,NewNum,L,LongL)
 			;
 			( Num > 1 ->
 				insertaElemento(Num,L,NewL),
 				NewNum is 0,
-				dameNumGruposFichasAdyacentes(Xs,Jugador,ListaJug1,ListaJug2,NewNum,NewL,LongL)
+				dameNumGruposFichasAdyacentes(Xs,Jugador,NewNum,NewL,LongL)
 				;
-				dameNumGruposFichasAdyacentes(Xs,Jugador,ListaJug1,ListaJug2,0,L,LongL)
+				dameNumGruposFichasAdyacentes(Xs,Jugador,0,L,LongL)
 			)
 			
 		)
@@ -982,26 +959,26 @@ dameNumGruposFichasAdyacentes([X|Xs],Jugador,ListaJug1,ListaJug2,Num,L,LongL):-
 	
 % Devuelve el número de fichas agrupadas del Jugador en todas las filas
 	
-fichasAgrupadasPorFila([A,B,C,D,E,F,G,H],Jugador,0,ListaJug1,ListaJug2,R,R).
-fichasAgrupadasPorFila([A,B,C,D,E,F,G,H],Jugador,Fila,ListaJug1,ListaJug2,R,RFinal):-	
+fichasAgrupadasPorFila([A,B,C,D,E,F,G,H],Jugador,0,R,R).
+fichasAgrupadasPorFila([A,B,C,D,E,F,G,H],Jugador,Fila,R,RFinal):-	
 	
 	(
-		Fila = 1, dameNumGruposFichasAdyacentes(A,Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
-		Fila = 2, dameNumGruposFichasAdyacentes(B,Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
-		Fila = 3, dameNumGruposFichasAdyacentes(C,Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
-		Fila = 4, dameNumGruposFichasAdyacentes(D,Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
-		Fila = 5, dameNumGruposFichasAdyacentes(E,Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
-		Fila = 6, dameNumGruposFichasAdyacentes(F,Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
-		Fila = 7, dameNumGruposFichasAdyacentes(G,Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
-		Fila = 8, dameNumGruposFichasAdyacentes(H,Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas)
+		Fila = 1, dameNumGruposFichasAdyacentes(A,Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
+		Fila = 2, dameNumGruposFichasAdyacentes(B,Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
+		Fila = 3, dameNumGruposFichasAdyacentes(C,Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
+		Fila = 4, dameNumGruposFichasAdyacentes(D,Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
+		Fila = 5, dameNumGruposFichasAdyacentes(E,Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
+		Fila = 6, dameNumGruposFichasAdyacentes(F,Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
+		Fila = 7, dameNumGruposFichasAdyacentes(G,Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
+		Fila = 8, dameNumGruposFichasAdyacentes(H,Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas)
 	),
 	NewFila is Fila - 1,
-	fichasAgrupadasPorFila([A,B,C,D,E,F,G,H],Jugador,NewFila,ListaJug1,ListaJug2,RAux,RFinal).
+	fichasAgrupadasPorFila([A,B,C,D,E,F,G,H],Jugador,NewFila,RAux,RFinal).
 	
 
 % Devuelve el número de fichas agrupadas del Jugador en todas las columnas
 	
-fichasAgrupadasPorColumna([A,B,C,D,E,F,G,H],Jugador,0,ListaJug1,ListaJug2,R,R).
+fichasAgrupadasPorColumna([A,B,C,D,E,F,G,H],Jugador,0,R,R).
 fichasAgrupadasPorColumna([	[A0,A1,A2,A3,A4,A5,A6,A7],
 							[B0,B1,B2,B3,B4,B5,B6,B7],
 							[C0,C1,C2,C3,C4,C5,C6,C7],
@@ -1009,17 +986,17 @@ fichasAgrupadasPorColumna([	[A0,A1,A2,A3,A4,A5,A6,A7],
 							[E0,E1,E2,E3,E4,E5,E6,E7],
 							[F0,F1,F2,F3,F4,F5,F6,F7],
 							[G0,G1,G2,G3,G4,G5,G6,G7],
-							[H0,H1,H2,H3,H4,H5,H6,H7]],Jugador,Columna,ListaJug1,ListaJug2,R,RFinal):-	
+							[H0,H1,H2,H3,H4,H5,H6,H7]],Jugador,Columna,R,RFinal):-	
 							
 	(
-		Columna = 1, dameNumGruposFichasAdyacentes([A0,B0,C0,D0,E0,F0,G0,H0],Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
-		Columna = 2, dameNumGruposFichasAdyacentes([A1,B1,C1,D1,E1,F1,G1,H1],Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
-		Columna = 3, dameNumGruposFichasAdyacentes([A2,B2,C2,D2,E2,F2,G2,H2],Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
-		Columna = 4, dameNumGruposFichasAdyacentes([A3,B3,C3,D3,E3,F3,G3,H3],Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
-		Columna = 5, dameNumGruposFichasAdyacentes([A4,B4,C4,D4,E4,F4,G4,H4],Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
-		Columna = 6, dameNumGruposFichasAdyacentes([A5,B5,C5,D5,E5,F5,G5,H5],Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
-		Columna = 7, dameNumGruposFichasAdyacentes([A6,B6,C6,D6,E6,F6,G6,H6],Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
-		Columna = 8, dameNumGruposFichasAdyacentes([A7,B7,C7,D7,E7,F7,G7,H7],Jugador,ListaJug1,ListaJug2,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas)
+		Columna = 1, dameNumGruposFichasAdyacentes([A0,B0,C0,D0,E0,F0,G0,H0],Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
+		Columna = 2, dameNumGruposFichasAdyacentes([A1,B1,C1,D1,E1,F1,G1,H1],Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
+		Columna = 3, dameNumGruposFichasAdyacentes([A2,B2,C2,D2,E2,F2,G2,H2],Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
+		Columna = 4, dameNumGruposFichasAdyacentes([A3,B3,C3,D3,E3,F3,G3,H3],Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
+		Columna = 5, dameNumGruposFichasAdyacentes([A4,B4,C4,D4,E4,F4,G4,H4],Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
+		Columna = 6, dameNumGruposFichasAdyacentes([A5,B5,C5,D5,E5,F5,G5,H5],Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
+		Columna = 7, dameNumGruposFichasAdyacentes([A6,B6,C6,D6,E6,F6,G6,H6],Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas);
+		Columna = 8, dameNumGruposFichasAdyacentes([A7,B7,C7,D7,E7,F7,G7,H7],Jugador,0,[],NumeroFichasAgrupadas), RAux is R + ( 3 * NumeroFichasAgrupadas)
 	),
 	NewColumna is Columna - 1,
 	fichasAgrupadasPorColumna([	[A0,A1,A2,A3,A4,A5,A6,A7],
@@ -1029,7 +1006,7 @@ fichasAgrupadasPorColumna([	[A0,A1,A2,A3,A4,A5,A6,A7],
 								[E0,E1,E2,E3,E4,E5,E6,E7],
 								[F0,F1,F2,F3,F4,F5,F6,F7],
 								[G0,G1,G2,G3,G4,G5,G6,G7],
-								[H0,H1,H2,H3,H4,H5,H6,H7]],Jugador,NewColumna,ListaJug1,ListaJug2,RAux,RFinal).	
+								[H0,H1,H2,H3,H4,H5,H6,H7]],Jugador,NewColumna,RAux,RFinal).	
 	
 
 	
