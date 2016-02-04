@@ -38,14 +38,7 @@
 
 :- dynamic bounds/1.
 
-% Mejor y peor de los casos: 
-	
-%	(200 + 200): Uno de los jugadores tiene más fichas haga lo que haga el otro
-%	48:	Número máximo de grupos de fichas en filas y columnas (3 grupos por cada línea)
-%	x -----------
-%	19200
-
-:- asserta(bounds(0/100000)). 
+:- asserta(bounds(-100000/100000)). 
 
 % X1 y X2 son las listas de donde se encuentran las fichas de cada jugador
 minimax(Board, BestMove, BestValue, Depth, X1, X2) :-
@@ -63,7 +56,7 @@ alphabeta(Board, Bounds, GoodMove, GoodVal, Depth, X1, X2, ToMove) :-
   OneDeeper is Depth - 1,
   boundedbest(Board, Moves, Bounds, GoodMove, GoodVal, OneDeeper, X1, X2, NextToMove), !.
 
-boundedbest(Board, [], Bounds, GoodMove, GoodVal, Depth, X1, X2, ToMove) :- !. % No existe movimiento posible
+% boundedbest(Board, [], Bounds, GoodMove, GoodVal, Depth, X1, X2, ToMove) :- !. % No existe movimiento posible
 boundedbest(Board, [Move|TailMoves], Bounds, GoodMove, GoodVal, Depth, X1, X2, ToMove) :-
   player(ToMove, X),
   reversi:put(Board, Move, X, X1, X2, NewBoard, NX1, NX2),    % Nuevo tablero con el movimiento aplicado
