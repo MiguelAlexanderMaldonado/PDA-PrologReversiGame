@@ -18,7 +18,7 @@
 				longitud/2,
 				maxFilasTablero/2,
 				maxColumnasTablero/2,
-				moves/3,
+				moves/4,
 				put/8,
 				opponent/1,
 				me/1
@@ -35,8 +35,7 @@
 limpia:-
         format('~c~s~c~s',[0x1b,"[H",0x1b,"[2J"]).
 
-:- dynamic 	tablero/8,bloqueado/1,listaJug1/1,listaJug2/1,maxFila/1,maxColumna/1,
-			listaCambiar/1,listaAuxiliar/1,listaMovimientos/1.
+:- dynamic 	tablero/8,bloqueado/1,listaJug1/1,listaJug2/1.
 
 % Referente a la máquina
 me(2).
@@ -131,20 +130,7 @@ reversi:-
 		%					(7,2),(7,3),(7,4),(7,5),(7,6),(7,7),(7,8),
 		%					(8,2),(8,3),(8,4),(8,5),(8,6),(8,7),(8,8)|[]])), 
 		% assertz(listaJug2([(3,4)|[]])), 
-		
-		% listaCambiar:		En ella se llevará las fichas que deben cambiar de propietario
-		assertz(listaCambiar([])), 
-		
-		% listaAuxiliar:	En ella se llevarán elementos que no se quieran perder en algunas operaciones
-		assertz(listaAuxiliar([])),
-	
-		% listaMovimientos:	En ella se llevarán todas las posibles posiciones en la que se puede poner una ficha donde existe al menos un flanqueo válido
-		assertz(listaMovimientos([])),	
-		
-		% MaxFila x MaxColumna son las dimensiones del tablero
-		assertz(maxFila(8)),
-		assertz(maxColumna(8)),
-		
+				
 		% bloqueado:		Indicará si el juego está bloqueado para algún jugador
 		assertz(bloqueado(0)),
 		
@@ -191,8 +177,10 @@ escribeFichasRestantes(NumFichas):-
 % damePosicionesAdyacentes(+,-) Devuelve en una lista las posiciones adyacentes a una posición dada
 
 damePosicionesAdyacentes((Fila,Columna),PosicionesAdyacentes):-
-		maxFila(MF),
-		maxColumna(MC),
+		
+		tablero(A,B,C,D,E,F,G,H),
+		maxFilasTablero([A,B,C,D,E,F,G,H],MF),
+		maxColumnasTablero([A,B,C,D,E,F,G,H],MC),
 		ColumnaAnterior is Columna - 1,
 		ColumnaPosterior is Columna + 1,
 		FilaAnterior is Fila - 1,
@@ -223,6 +211,7 @@ damePosicionesAdyacentes((Fila,Columna),PosicionesAdyacentes):-
 
 % contieneElemento(+,+) Acierta si en la lista pasada por parámetro existe el elemento pasado por parámetro.
 
+contieneElemento(X):- false.
 contieneElemento(X,[]):- false.
 contieneElemento(X,[X|Xs]):- true.
 contieneElemento(X,[Y|Ys]):- contieneElemento(X,Ys).
@@ -362,7 +351,9 @@ dameFichasAdyacentesJugador(X,Jug,PosicionesAdyacentes):-
 
 % encuentraFinalFlanqueo(+,+,+,+)	Verifica si un posible recorrido de flanqueo es un flanqueo válido
 
-encuentraFinalFlanqueo((F,C),Jug,NewDespF,NewDespC):-
+encuentraFinalFlanqueo(0,_,_,_,Flanqueo,Flanqueo).
+encuentraFinalFlanqueo(-1,_,_,_,_,[]).
+encuentraFinalFlanqueo((F,C),Jug,NewDespF,NewDespC,FL,Flanqueo):-
 
 	% write('Entra en encuentraFinalFlanqueo '),nl,
 	
@@ -378,18 +369,16 @@ encuentraFinalFlanqueo((F,C),Jug,NewDespF,NewDespC):-
 				contieneElemento((F,C),Y),				
 				
 				% Guarda la ficha
-				listaAuxiliar(M), 						
-				insertaElemento((F,C),M,NewFlanqueo), 
-				retract(listaAuxiliar(_M)), 
-				assertz(listaAuxiliar(NewFlanqueo)), 
+				insertaElemento((F,C),FL,NewFlanqueo),
 				
 				!,	% Evita la reevaluación de un estado previo cuando se realiza backtraking
 				% Continua el recorrido
-				encuentraFinalFlanqueo((NewF,NewC),Jug,NewDespF,NewDespC);
+				encuentraFinalFlanqueo((NewF,NewC),Jug,NewDespF,NewDespC,NewFlanqueo,Flanqueo);
 		
 		Jug = 1, 
 				% Comprueba que la siguiente ficha pertenece al jugador -> Final del flanqueo
-				contieneElemento((F,C),X);
+				contieneElemento((F,C),X),
+				encuentraFinalFlanqueo(0,Jug,NewDespF,NewDespC,FL,Flanqueo);
 		
 				% Se hacen las mismas verificaciones para los recorridos de flanqueos de la máquina
 		
@@ -397,30 +386,29 @@ encuentraFinalFlanqueo((F,C),Jug,NewDespF,NewDespC):-
 		
 				contieneElemento((F,C),X), 
 				
-				listaAuxiliar(N), 
-				insertaElemento((F,C),N,NewFlanqueo), 
-				retract(listaAuxiliar(_N)), 
-				assertz(listaAuxiliar(NewFlanqueo)),				
-				!,
-				% write('eFF:	Sigue la busqueda '),nl,
-				encuentraFinalFlanqueo((NewF,NewC),Jug,NewDespF,NewDespC);
+				% Guarda la ficha
+				insertaElemento((F,C),FL,NewFlanqueo),
+				
+				!,	% Evita la reevaluación de un estado previo cuando se realiza backtraking
+				% Continua el recorrido
+				encuentraFinalFlanqueo((NewF,NewC),Jug,NewDespF,NewDespC,NewFlanqueo,Flanqueo);
 		
 		Jug = 2, 
 				
-				contieneElemento((F,C),Y)
+				contieneElemento((F,C),Y),
+				encuentraFinalFlanqueo(0,Jug,NewDespF,NewDespC,FL,Flanqueo)
 		
-	) -> true
-	;
-	% write('eFF:	No existe flanqueo'),nl,
-	false.
+	) 	-> 	true		
+		;
+		encuentraFinalFlanqueo(-1,Jug,NewDespF,NewDespC,FL,Flanqueo).
 	
 % ------------------------------------------------------------------------------------------------------------------------			
 
 % comprobarFlanqueos(+,+,+) Mira si existe falqueo en todas las posibles direcciones dibujadas tomando como origen la ficha (Fila,Columna) 
 %							y como sentido todas las fichas adyacentes del oponente
 
-comprobarFlanqueos(X,[],Jug).
-comprobarFlanqueos((Fila,Columna),[(F,C)|Xs],Jug):-
+comprobarFlanqueos(X,[],Jug,FichasACambiar,FichasACambiar).
+comprobarFlanqueos((Fila,Columna),[(F,C)|Xs],Jug,FAC,FichasACambiar):-
 	
 	% write('Entra en comprobarFlanqueos'),nl,nl,
 		
@@ -430,46 +418,34 @@ comprobarFlanqueos((Fila,Columna),[(F,C)|Xs],Jug):-
 	NewDespF is (SumFila * (-1)),
 	NewDespC is (SumColumna * (-1)),
 	
-	(	% Si existe un flanqueo válido, se inserta el recorrido el lista de elementos a cambiar de propietario
-		encuentraFinalFlanqueo((F,C),Jug,NewDespF,NewDespC) ->
-			listaAuxiliar(O),			
-			listaCambiar(P),
-			insertaElementos(O,P,AuxCambiar),
-			eliminaRepetidos(AuxCambiar,NewCambiar),
-			retract(listaAuxiliar(_O)),
-			retract(listaCambiar(_P)),
-			assertz(listaAuxiliar([])),
-			assertz(listaCambiar(NewCambiar))
+	% Si existe un flanqueo válido, se inserta el recorrido el lista de elementos a cambiar de propietario
+	encuentraFinalFlanqueo((F,C),Jug,NewDespF,NewDespC,[],Flanqueo),
+	(	not(Flanqueo = []) ->
+			insertaElementos(Flanqueo,FAC,NewFAC),
+			comprobarFlanqueos((Fila,Columna),Xs,Jug,NewFAC,FichasACambiar)
 		;
 		% Si no existe un flanqueo válido, se elimina de la lista auxiliar el recorrido guardado hasta el momento
-			listaAuxiliar(N), 
-			retract(listaAuxiliar(_N)), 
-			assertz(listaAuxiliar([]))
-	),
-	comprobarFlanqueos((Fila,Columna),Xs,Jug). 
+			comprobarFlanqueos((Fila,Columna),Xs,Jug,FAC,FichasACambiar)
+	).
+	% ,
+	% comprobarFlanqueos((Fila,Columna),Xs,Jug). 
 	
 % ------------------------------------------------------------------------------------------------------------------------			
 
 % existeFlanqueo(+,+) Comprueba si al menos existe un flaqueo, es decir, si partiendo de la ficha (Fila,Columna) y siguiendo una
 % 						de las posibles direcciones en las que hay adyacente al menos una ficha del oponente nos encontraremos con otra ficha del jugador.
 
-existeFlanqueo(X,Jug):-
+existeFlanqueo(X,Jug,FichasACambiar):-
 
 	% write('Entra en existeFlanqueo '),nl,
 
 	dameFichasAdyacentesJugador(X,Jug,Adyacentes),
 	% write('eF:	Posiciones adyacentes del oponente: '),muestraFichas(Adyacentes),nl,nl,	
 		
-	listaAuxiliar(Y),
-	retract(listaAuxiliar(_Y)),
-	assertz(listaAuxiliar([])),
-	
-	comprobarFlanqueos(X,Adyacentes,Jug), !,
-	
-	listaCambiar(Z),
+	comprobarFlanqueos(X,Adyacentes,Jug,[],FichasACambiar), !,
 	
 	% Si listaCambiar está vacía indica que no existe flanqueo válido
-	(	Z = [] ->
+	(	FichasACambiar = [] ->
 			false
 		;
 			% write('eF:	Posiciones a cambiar de propietario: '),muestraFichas(Y),nl,nl,
@@ -480,7 +456,7 @@ existeFlanqueo(X,Jug):-
 	
 % posicionValida(+,+,+) Comprueba si la posición (Fila,Columna) es válida y devuelve las fichas que cambian de propietario
 	
-posicionValida(X,Jug):-
+posicionValida(X,Jug,FichasACambiar):-
 		
 	% Comprueba que la posición no esté ocupada por el oponente
 	(estaOcupada(X)	->
@@ -489,7 +465,7 @@ posicionValida(X,Jug):-
 		% Verifica que haya al menos una ficha del oponente cerca
 		(existeFichaOponenteAdyacente(X,Jug)	->
 			% Comprueba que exista al menos un flanqueo válido
-			(existeFlanqueo(X,Jug) ->
+			(existeFlanqueo(X,Jug,FichasACambiar) ->
 				true
 				;
 				false			
@@ -546,15 +522,10 @@ cambiaFichas(Tablero,[(F,C)|Xs],Jug,NewTablero):- cambiaFicha(Tablero,F,C,Jug,An
 	
 % colocaFicha(+,+,+,+,-) Coloca la ficha del jugador Jug en la posicion (Fila,Columna) y devuelve las fichas que cambian de propietario 
 
-colocaFicha([A,B,C,D,E,F,G,H],(Fila,Columna),Jug,[Ac,Bc,Cc,Dc,Ec,Fc,Gc,Hc],X):-
-		
-		listaCambiar(Y),
-		retract(listaCambiar(_Y)),
-		assertz(listaCambiar([])),
+colocaFicha([A,B,C,D,E,F,G,H],(Fila,Columna),Jug,[Ac,Bc,Cc,Dc,Ec,Fc,Gc,Hc],FichasACambiar):-
 		
 		% Comprueba que la posición es válida
-		(posicionValida((Fila,Columna),Jug) ->
-			listaCambiar(X),
+		(posicionValida((Fila,Columna),Jug,FichasACambiar) ->
 			(	
 				Fila = 1,ponFicha(Columna,Jug,A,Ac),Bc = B, Cc = C, Dc = D, Ec = E, Fc = F, Gc = G, Hc = H;
 				Fila = 2,ponFicha(Columna,Jug,B,Bc),Ac = A, Cc = C, Dc = D, Ec = E, Fc = F, Gc = G, Hc = H;
@@ -579,15 +550,11 @@ cambiarFichasDePropietario(Jug1,Jug2,X,Jug,NewJug1,NewJug2):-
 
 	( 	Jug = 1 ->
 			insertaElementos(X,Jug1,NewJug1),			
-			eliminaElementos(X,Jug2,NewJug2),	   
-			retract(listaCambiar(_X)),
-			assert(listaCambiar([]))
+			eliminaElementos(X,Jug2,NewJug2)
 		;
 		(Jug = 2 ->
 			insertaElementos(X,Jug2,NewJug2),			
-			eliminaElementos(X,Jug1,NewJug1),
-			retract(listaCambiar(_X)),
-			assert(listaCambiar([]))
+			eliminaElementos(X,Jug1,NewJug1)
 		;		
 			false
 		)
@@ -649,11 +616,8 @@ jugadorBloqueado(Jug):-
 			AuxJug = max
 	),
 	tablero(A,B,C,D,E,F,G,H),
-	listaCambiar(X),
-	retract(listaCambiar(_X)),
-	assert(listaCambiar([])),
 	% Devuelve los posibles movimientos que existen en el turno del jugador 
-	moves([A,B,C,D,E,F,G,H],AuxJug,M),
+	moves([A,B,C,D,E,F,G,H],AuxJug,[],M),
 	( M = [] ->
 		true
 		;
@@ -749,12 +713,7 @@ mueveMaquina(Prof):-
 % haTerminado Libera toda la memoria de la base de conocimeinto
 haTerminado:-
 	retractall(tablero(_A,_B,_C,_D,_E,_F,_G,_H)),
-	retractall(fichas(_)),
-	retractall(maxFila(_)),
-	retractall(maxColumna(_)),
-	retractall(listaAuxiliar(_)),
-	retractall(listaMovimientos(_)),
-	retractall(listaCambiar(_)),	
+	retractall(fichas(_)),	
 	listaJug1(L1),listaJug2(L2),
 	longitud(L1,N1),longitud(L2,N2),
 	( N1 < N2 -> 
@@ -816,72 +775,48 @@ damePosicionesAdyacentesLibres((Fila,Columna), PosicionesAdyacentesLibres):-
 
 %	existenFlanqueos(+,+) Busca todos los posibles flaqueos existentes para el jugador Jug tomando como punto de partida cada elemento de la lista
 
-buscaFlanqueos([],Jug).
-buscaFlanqueos([(Fila,Columna)|Xs],Jug):-
+buscaFlanqueos([],Jug,Movimientos,Movimientos).
+buscaFlanqueos([(Fila,Columna)|Xs],Jug,M,Movimientos):-
 			
-	listaCambiar(L), 
-	retract(listaCambiar(_L)), 
-	assertz(listaCambiar([])),
-	
-	listaMovimientos(M),
-	
-	(	existeFlanqueo((Fila,Columna),Jug) ->
-			
-			( not(contieneElemento((Fila,Columna),M)) ->
-				insertaElemento((Fila,Columna),M,NewM),
-				retract(listaMovimientos(_M)),
-				assertz(listaMovimientos(NewM))
-				;
-				buscaFlanqueos(Xs,Jug)
-			)
-		;
-			buscaFlanqueos(Xs,Jug)
+	(existeFlanqueo((Fila,Columna),Jug,FichasACambiar) ->
+		
+		( not(contieneElemento((Fila,Columna),M)) ->
+			insertaElemento((Fila,Columna),M,NewM),
+			buscaFlanqueos(Xs,Jug,NewM,Movimientos)
+			;
+			buscaFlanqueos(Xs,Jug,M,Movimientos)
+		)
+	;
+		buscaFlanqueos(Xs,Jug,M,Movimientos)
 	).
 
 % compruebaMovimientos(+,+) Comprueba todos los movimientos existentes para el jugador Jug, lo cual se determina con la ayuda de las fichas
 % 							del oponente ya que debe flanquear estas
 
-compruebaMovimientos([],Jug).
-compruebaMovimientos([X|Xs],Jug):-
+compruebaMovimientos([],Jug,Movimientos,Movimientos).
+compruebaMovimientos([X|Xs],Jug,M,Movimientos):-
 
 	% write('Entra en compruebaMovimientos'),nl,nl,
 
-	listaAuxiliar(N), 
-	insertaElemento(X,N,NewFlanqueo), 
-	retractall(listaAuxiliar(_)), 
-	assertz(listaAuxiliar(NewFlanqueo)),
-	
 	% Se determina las posiciones libres adyacentes a cada ficha del jugador 
 	damePosicionesAdyacentesLibres(X, PosicionesAdyacentesLibres),
 	
-	buscaFlanqueos(PosicionesAdyacentesLibres,Jug), 
+	buscaFlanqueos(PosicionesAdyacentesLibres,Jug,[],MV),
+	insertaElementos(MV, M, NM),
 	
-	% listaCambiar(Y),
-	% write('cM:	Posiciones a cambiar de propietario: '),muestraFichas(Y),nl,nl
-	
-	compruebaMovimientos(Xs,Jug).
+	compruebaMovimientos(Xs,Jug,NM,Movimientos).
 
 % moves(+,+,-) Devuelve en una lista todos los posibles movimientos del jugador Jug
 
-moves(Tablero,Jug,M):-
-	
-	listaCambiar(P),
-	retract(listaCambiar(_P)),
-	assertz(listaCambiar([])),
-	
-	listaMovimientos(Q),
-	retract(listaMovimientos(_Q)),
-	assertz(listaMovimientos([])),
+moves(Tablero,Jug,M,Movimientos):-
 	
 	( Jug = min ->
 			listaJug2(X),
-			compruebaMovimientos(X,1)
+			compruebaMovimientos(X,1,M,Movimientos)
 		;
 			listaJug1(X),
-			compruebaMovimientos(X,2)
-	),
-	
-	listaMovimientos(M).
+			compruebaMovimientos(X,2,M,Movimientos)
+	).
 	
 
 %  	ponFicha(+,+,+,+,+,-,-,-) Devuelve en NuevoTablero el movimiento de posicionar la ficha del Jugador en Pos, 

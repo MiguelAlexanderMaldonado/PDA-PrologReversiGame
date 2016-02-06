@@ -8,7 +8,7 @@
 
 :- use_module(reversi,
         [
-			moves/3,
+			moves/4,
 			put/8,
 			opponent/1,
 			me/1
@@ -52,7 +52,7 @@ alphabeta(Board, _, _, Val, 0, X1, X2, ToMove) :-
 
 alphabeta(Board, Bounds, GoodMove, GoodVal, Depth, X1, X2, ToMove) :-
   min_or_max(ToMove, NextToMove),
-  reversi:moves(Board, NextToMove, Moves),     % Obtiene todos los movimientos posibles   
+  reversi:moves(Board, NextToMove, [], Moves),     % Obtiene todos los movimientos posibles   
   OneDeeper is Depth - 1,
   boundedbest(Board, Moves, Bounds, GoodMove, GoodVal, OneDeeper, X1, X2, NextToMove), !.
 
