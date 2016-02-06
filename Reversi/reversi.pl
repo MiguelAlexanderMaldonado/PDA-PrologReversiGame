@@ -149,11 +149,11 @@ dificultad(Dificultad):-
 		write('___________________________________________________________'),nl,nl,
 		(
 			Respuesta == 1 -> 
-			Dificultad = 1
+			Dificultad = 2
 			;
 			(
 				Respuesta == 2 -> 
-				Dificultad = 3
+				Dificultad = 4
 				;
 				dificultad(Dificultad)
 			)		
@@ -211,14 +211,9 @@ damePosicionesAdyacentes((Fila,Columna),PosicionesAdyacentes):-
 
 % contieneElemento(+,+) Acierta si en la lista pasada por parámetro existe el elemento pasado por parámetro.
 
-contieneElemento(X):- false.
 contieneElemento(X,[]):- false.
 contieneElemento(X,[X|Xs]):- true.
 contieneElemento(X,[Y|Ys]):- contieneElemento(X,Ys).
-
-contieneElemento2(X,[]):- false.
-contieneElemento2((A,B),[(A,B,_)|Xs]):- true.
-contieneElemento2(X,[Y|Ys]):- contieneElemento2(X,Ys).
 
 % existenComunes(+,+) Acierta si en la segunda lista pasada por parámetro existe algún elemento de la primera lista.
 
